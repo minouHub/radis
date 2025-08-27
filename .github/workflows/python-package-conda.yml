@@ -23,6 +23,7 @@ jobs:
         conda env create --file environment.yml --name myenv
     - name: Lint with flake8
       run: |
+        conda init #otherwise, 'conda activate myenv' will not work
         conda activate myenv
         conda install flake8
         # stop the build if there are Python syntax errors or undefined names
