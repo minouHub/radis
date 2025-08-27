@@ -5,6 +5,11 @@ on: [push]
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -el {0} #needed to enable conda, see https://stackoverflow.com/questions/72703363/how-to-activate-conda-environment-in-github-actions
+
     strategy:
       max-parallel: 5
 
@@ -21,16 +26,31 @@ jobs:
     - name: Install dependencies
       run: |
         conda env create --file environment.yml --name myenv
+    - name: Activate the environement
+      steps:
+        - uses: actions/checkout@v4
+        - uses: conda-incubator/setup-miniconda@v3
+          with:
+            activate-environment: myenv
+            channels: conda-forge
+            allow-softlinks: true
+            show-channel-urls: true
+            use-only-tar-bz2: true
+        - run: |
+            conda info
+            conda list
+            conda config --show-sources
+            conda config --show
+            conda install pytest
+            pytest -m "fast and not needs_db_CDSD_HITEMP_PCN and not needs_db_CDSD_HITEMP and not needs_db_CDSD_HITEMP_PC" --durations=10
     - name: Lint with flake8
       run: |
-        conda init #otherwise, 'conda activate myenv' will not work
-        conda activate myenv
         conda install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        conda install pytest
-        pytest -m "fast and not needs_db_CDSD_HITEMP_PCN and not needs_db_CDSD_HITEMP and not needs_db_CDSD_HITEMP_PC" --durations=10
+    # - name: Test with pytest
+    #   run: |
+    #     conda install pytest
+    #     pytest -m "fast and not needs_db_CDSD_HITEMP_PCN and not needs_db_CDSD_HITEMP and not needs_db_CDSD_HITEMP_PC" --durations=10
